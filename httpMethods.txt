@@ -1,0 +1,51 @@
+## Http Methods
+
+
+Most common headers:
+Accept: application/json
+User-Agent
+Authorization
+Content-Type
+Cookie
+Cache-Control
+
+CORS
+Access-Control-Allow-Origin
+Access-Control-Allow-Credentials
+Access-Control-Allow-Method
+
+Security
+XSS
+
+## HTTP Methods
+GET: retrieve a resource
+HEAD: No message body (response headers only)
+OPTIONS: what operations are available
+TRACE: Loopback test (get same data)
+DELETE: remove a resource
+PUT: replace a resource
+POST: interact with a resource (mostly add)
+PATCH: change part of a resource
+
+## status codes
+1 - Informational
+2 - Success
+3 - Redirect
+4 - Client error
+5 - Server error
+
+100 continue
+102 processing
+200 ok
+201 created
+202 accepted
+307 temp Redirect
+308 permanent Redirect
+400 bad request
+401 unauthorized
+402 payment required
+404 not found
+500 internal server error
+504 gateway time out
+
+
