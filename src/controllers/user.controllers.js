@@ -4,6 +4,7 @@ import { ApiError } from '../utils/apiError.js'
 import { User } from '../models/user.models.js'
 import { uploadOnCloudinary } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/apiResponse.js'
+import jwt from 'jsonwebtoken'
 
 const generateAccessRefreshTokens = async(userId) => {
     try {
@@ -168,7 +169,7 @@ const logoutUser = asyncHandler(async(req,res) => {
         secure: true
     }
 
-    return res.status(200).clearCookie("accessToken",options).cookie("refreshToken",options).json(
+    return res.status(200).clearCookie("accessToken",options).clearCookie("refreshToken",options).json(
         new ApiResponse(
             200,
             {},
@@ -179,4 +180,41 @@ const logoutUser = asyncHandler(async(req,res) => {
 
 })
 
-export {registerUser, loginUser, logoutUser}
+const refreshAccessToken = asyncHandler(async(req,res) => {
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+    if (!refreshToken) throw new ApiError(400,"refresh token not provided")
+
+    try {
+        const decodedToken = jwt.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET)
+    
+        const user = await User.findById(decodedToken?._id)?.select("-password")
+    
+    
+        if (!user || user.refreshToken !== refreshToken) {
+            throw new ApiError(403, "wrong refresh token noob")
+        }
+    
+        const {newAccessToken,newRefreshToken} = await generateAccessRefreshTokens(decodedToken._id)
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+    
+        return res.status(200).cookie("accessToken",newAccessToken,options).cookie("refreshToken",newRefreshToken,options).json(
+            new ApiResponse(
+                200,
+                {newAccessToken,newRefreshToken},
+                "new access token generated saksefully"
+            )
+        )
+    } catch (error) {
+        throw new ApiError(500, "idk what happened: "+error.message)
+    }
+
+
+    
+})
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken}

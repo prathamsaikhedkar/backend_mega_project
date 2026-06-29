@@ -116,3 +116,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+test.js
+test.py
+output.txt
+output2.txt
