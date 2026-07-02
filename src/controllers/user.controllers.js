@@ -4,6 +4,7 @@ import { User } from '../models/user.models.js'
 import { uploadOnCloudinary } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/apiResponse.js'
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 import { Subscription } from '../models/subscription.models.js'
 
 const generateAccessRefreshTokens = async(userId) => {
@@ -157,8 +158,8 @@ const logoutUser = asyncHandler(async(req,res) => {
     const userId = req.user._id
 
     const user = await User.findByIdAndUpdate(userId, {
-        $set: {
-            refreshToken: undefined
+        $unset: {
+            refreshToken: 1
         }
     }, {
         new: true
@@ -427,6 +428,58 @@ const getUserChannelProfile = asyncHandler(async(req,res) => {
 
 })
 
+const getWatchHistory = asyncHandler(async(req,res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)      
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "videoOwner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "here's your watch history"
+        )
+    )
+})
+
 export {
     registerUser, 
     loginUser, 
@@ -437,5 +490,6 @@ export {
     updateAccountDetails,
     updateAvatar,
     updateCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
